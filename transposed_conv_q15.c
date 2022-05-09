@@ -13,6 +13,8 @@ Write your code in this editor and press "Run" button to compile and execute it.
 #include <math.h>
 
 
+#define NNOM 1
+#define KERAS 0
 
 int local_conv_trans_HWC_q15_nonsquare(void);
 int get_boundaries(int start);
@@ -29,50 +31,50 @@ int main()
 int local_conv_trans_HWC_q15_nonsquare()
 {
     static int count = 0;
-    int input [16 *1];
-    int size_channels=2; // output & kernel
-    int kernel[ 9 *size_channels]; 
-    int output[ 36 *size_channels];
-    int bias [1   *size_channels];
+    int ch_image_in = 2;
+    int ch_image_out=2; // output & kernel
+
+    int input [16 *ch_image_in];
+    int kernel[ 9 *ch_image_in*ch_image_out]; 
+    int output[36 *ch_image_out];
+    int bias  [ 1 *ch_image_out];
 
     fill_buffer(input, sizeof(input) /sizeof(int),1);
+    //fill_buffer(input+16, ( sizeof(input) /sizeof(int))/2, 0.5);
     fill_buffer(kernel,sizeof(kernel)/sizeof(int),1);
     fill_buffer(output,sizeof(output)/sizeof(int),0);
     fill_buffer(bias , sizeof(bias)  /sizeof(int),0);
     
     
-    int i=0,j=0,k=0,l=0,m=0,n=0;
-    int kernel_size_c=size_channels,    kernel_size_x=sqrt((sizeof(kernel)/kernel_size_c)/sizeof(int)),        kernel_size_y=sqrt((sizeof(kernel)/kernel_size_c)/sizeof(int)) ;
-    int input_size_c=1,                 input_size_x =sqrt((sizeof(input)/input_size_c)/sizeof(int)),          input_size_y =sqrt((sizeof(input)/input_size_c)/sizeof(int));        
-    int output_size_c=size_channels,    output_size_x=sqrt((sizeof(output)/output_size_c)/sizeof(int)),        output_size_y=sqrt((sizeof(output)/output_size_c)/sizeof(int)) ;
+    int i=0,j=0,k=0,l=0,m=0,n=0,p=0;
+    int kernel_size_c=ch_image_in*ch_image_out,    kernel_size_x=sqrt((sizeof(kernel)/kernel_size_c)/sizeof(int)),        kernel_size_y=sqrt((sizeof(kernel)/kernel_size_c)/sizeof(int)) ;
+    int input_size_c=ch_image_in,                  input_size_x =sqrt((sizeof(input)/input_size_c)/sizeof(int)),          input_size_y =sqrt((sizeof(input)/input_size_c)/sizeof(int));        
+    int output_size_c=ch_image_out,                output_size_x=sqrt((sizeof(output)/output_size_c)/sizeof(int)),        output_size_y=sqrt((sizeof(output)/output_size_c)/sizeof(int)) ;
     
     int kernel_index = 0, output_index=0, input_index=0,  starting_output_x=0, starting_output_y=0;
     int stride_x=1, stride_y=1, padding_x=0, padding_y=0;
     
-    //printf("size input x %d\r\n",input_size_x);
-    
-    for(n=0;n<kernel_size_c;n++)                        //kernel channel
+    printf("size input  c %d\r\n",input_size_c);
+
+
+    for(n=0;n<ch_image_out;n++)                         //output channel / kernel filter
     {
         for(l=0;l<input_size_y;l++)                     //input axe y 
         {
-   
             for(m=0;m<input_size_x;m++)                 //input axe x
             {
-                //get_boundaries(&starting_output_y);
-                
                 for(i=0;i<kernel_size_y;i++)            //kernel axe y
                 {
-                    
                     for(j=0;j<kernel_size_x;j++)        //kernel axe x
                     {
-                        for(k=0;k<input_size_c;k++)     //input channel
-                        {
-                            kernel_index = i*kernel_size_x+j                     + (kernel_size_x*kernel_size_y*n);                 // + (x*y*n) is changing kernel layer to the corresponding pixel
-                            output_index = i*output_size_x+j+ (m*stride_x) + (l*stride_y*output_size_x) + (output_size_x*output_size_y*n);   // + (x*y*n) is changing output layer to the corresponding pixel
-                            input_index  = l*input_size_x+m                      + (input_size_x*input_size_y*k);                   // + (x*y*k) is changing input layer to the corresponding pixel
+                        for(k=0;k<input_size_c;k++)     //input channel / kernel channel
+                        { 
+                            input_index  = l*input_size_x+m   + (input_size_x*input_size_y*k);                                                       // + (x*y*k) is changing input layer to the corresponding pixel
+                            kernel_index = i*kernel_size_x+j  + (kernel_size_x*kernel_size_y*k)+  (kernel_size_x*kernel_size_y*input_size_c*n);      // + (x*y*p) is changing kernel layer to the corresponding pixel
+                            output_index = i*output_size_x+j  + (m*stride_x) + (l*stride_y*output_size_x) + (output_size_x*output_size_y*n);                      // + (x*y*p) is changing output layer to the corresponding pixel
                             output[output_index] += input[input_index]*kernel[kernel_index];
                             //printf("output index %d ,value %d \r\n",output_index,output[output_index] );
-                            printf("output index %d \r\n",output_index);
+                            //printf("input index %d * kernel index %d -> put in %d\r\n",input_index, kernel_index, output_index);
                         }
                     }
                 }
@@ -83,10 +85,11 @@ int local_conv_trans_HWC_q15_nonsquare()
             //printf("\nChanging  input axe y \r\n");
             
         }
-        //printf("\nChanging channel kernel \r\n");
+        //printf("\nChanging  kernel filter \r\n");
     }
-    //show_tab(output_size_x,output_size_y,output_size_c,output,1);
-    for(i=0;i<size_channels;i++)
+    //printf("%d, %d, %d \r\n",output_size_x,output_size_y,output_size_c);
+    show_tab(output_size_x,output_size_y,output_size_c,output,NNOM);
+    for(i=0;i<ch_image_out;i++)
     {
         for(j=0;j<output_size_x*output_size_y;j++)
         {
