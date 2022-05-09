@@ -32,21 +32,23 @@ int local_conv_trans_HWC_q15_nonsquare()
 {
     static int count = 0;
     int ch_image_in = 2;
-    int ch_image_out=2; // output & kernel
-
-    int input [16 *ch_image_in];
-    int kernel[ 9 *ch_image_in*ch_image_out]; 
-    int output[36 *ch_image_out];
+    int ch_image_out=1; // output & kernel
+    //25 *ch_image_in
+    //https://medium.com/apache-mxnet/transposed-convolutions-explained-with-ms-excel-52d13030c7e8
+    int input []={1,0,1,0,2,1,1,3,2,1,1,1,0,1,1,2,3,2,1,3,0,2,0,1,0,     1,0,0,1,0,2,0,1,2,0,3,1,1,3,0,0,3,0,3,2,1,0,3,2,1};
+    //9 *ch_image_in*ch_image_out
+    int kernel[]={0,1,0,0,0,2,0,1,0,   2,1,0,0,0,0,0,3,0}; 
+    int output[49 *ch_image_out];
     int bias  [ 1 *ch_image_out];
 
-    fill_buffer(input, sizeof(input) /sizeof(int),1);
+    //fill_buffer(input, sizeof(input) /sizeof(int),1);
     //fill_buffer(input+16, ( sizeof(input) /sizeof(int))/2, 0.5);
-    fill_buffer(kernel,sizeof(kernel)/sizeof(int),1);
+    //fill_buffer(kernel,sizeof(kernel)/sizeof(int),1);
     fill_buffer(output,sizeof(output)/sizeof(int),0);
     fill_buffer(bias , sizeof(bias)  /sizeof(int),0);
     
     
-    int i=0,j=0,k=0,l=0,m=0,n=0,p=0;
+    int i=0,j=0,k=0,l=0,m=0,n=0;
     int kernel_size_c=ch_image_in*ch_image_out,    kernel_size_x=sqrt((sizeof(kernel)/kernel_size_c)/sizeof(int)),        kernel_size_y=sqrt((sizeof(kernel)/kernel_size_c)/sizeof(int)) ;
     int input_size_c=ch_image_in,                  input_size_x =sqrt((sizeof(input)/input_size_c)/sizeof(int)),          input_size_y =sqrt((sizeof(input)/input_size_c)/sizeof(int));        
     int output_size_c=ch_image_out,                output_size_x=sqrt((sizeof(output)/output_size_c)/sizeof(int)),        output_size_y=sqrt((sizeof(output)/output_size_c)/sizeof(int)) ;
